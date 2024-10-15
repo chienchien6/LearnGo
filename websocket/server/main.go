@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"fmt"
@@ -13,18 +13,26 @@ var UP = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+var conns []*websocket.Conn //把所有的conn都存起來
+
 func handle(w http.ResponseWriter, r *http.Request) {
 	conn, err := UP.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print(err)
 		return
 	}
+	conns = append(conns, conn) //把所有的conn都存起來
 	for {
 		m, p, e := conn.ReadMessage()
 		if e != nil {
 			break
 		}
-		fmt.Println(m, p)
+		for i := range conns {
+			conns[i].WriteMessage(websocket.TextMessage, []byte("Are you saying:"+string(p)+"?")) //把所有的conn都存起來
+		}
+
+		fmt.Println(m, string(p)) //string(p)才會印出文字
+
 	}
 	defer conn.Close()
 	log.Println("conn close")
